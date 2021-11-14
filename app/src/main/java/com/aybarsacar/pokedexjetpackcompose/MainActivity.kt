@@ -10,9 +10,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.aybarsacar.pokedexjetpackcompose.pokemondetail.PokemonDetailScreen
 import com.aybarsacar.pokedexjetpackcompose.pokemonlist.PokemonListScreen
 import com.aybarsacar.pokedexjetpackcompose.ui.theme.PokedexJetpackComposeTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.*
 
 
 @AndroidEntryPoint
@@ -48,21 +50,24 @@ class MainActivity : ComponentActivity() {
             // get the dominant color from the url param passed in
             val dominantColor = remember {
               val color = it.arguments?.getInt("dominantColor")
-              color?.let {
-                Color(it) ?: Color.White
-              }
+
+              color?.let { Color(it) } ?: Color.White
             }
 
             // get the pokemon name form the url param passed in
             val pokemonName = remember {
-              it.arguments?.getString("pokemonName")
+              it.arguments?.getString("pokemonName") ?: ""
             }
+
+            // render detail screen
+            PokemonDetailScreen(
+              dominantColor = dominantColor,
+              pokemonName = pokemonName.lowercase(Locale.ROOT),
+              navController = navController
+            )
           }
 
-          // render detail screen
-
         }
-
       }
     }
   }

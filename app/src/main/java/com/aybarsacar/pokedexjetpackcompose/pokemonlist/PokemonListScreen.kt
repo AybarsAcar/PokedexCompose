@@ -141,7 +141,9 @@ fun PokemonList(
       if (it >= itemCount - 1 && !endReached && !isLoading && !isSearching) {
         // we scrolled to the bottom so paginate
         // which will add to the lazy column
-        viewModel.loadPokemonPaginated()
+        LaunchedEffect(key1 = true) {
+          viewModel.loadPokemonPaginated()
+        }
       }
 
       PokedexRow(rowIndex = it, entries = pokemonList, navController = navController)
