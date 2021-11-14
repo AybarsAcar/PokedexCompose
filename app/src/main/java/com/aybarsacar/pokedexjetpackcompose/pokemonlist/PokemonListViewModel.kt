@@ -13,6 +13,7 @@ import com.aybarsacar.pokedexjetpackcompose.repository.PokemonRepository
 import com.aybarsacar.pokedexjetpackcompose.util.Constants
 import com.aybarsacar.pokedexjetpackcompose.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -28,10 +29,58 @@ class PokemonListViewModel @Inject constructor(private val _repository: PokemonR
   var isLoading = mutableStateOf(false)
   var endReached = mutableStateOf(false)
 
+  var isSearching = mutableStateOf(false)
+
+  // cache pokemon list to display search or list view results
+  // this will be used to reinitialise the list after search is done / cancelled
+  private var _cachedPokemonList = emptyList<PokedexListEntry>()
+  private var _isSearchStarting = true
+
 
   init {
     // first initial load
     loadPokemonPaginated()
+  }
+
+
+  /**
+   * searches and filters the pokemons that are already loaded into cache
+   * it is a local search not a remote search since the API does not support it
+   */
+  fun searchPokemonList(query: String) {
+
+    val listToSearch = if (_isSearchStarting) {
+      pokemonList.value
+    } else {
+      _cachedPokemonList
+    }
+
+    viewModelScope.launch(Dispatchers.Default) {
+
+      if (query.isEmpty()) {
+
+        // set it back to its initial value because search has ended
+        pokemonList.value = _cachedPokemonList
+        isSearching.value = false
+        _isSearchStarting = true
+        return@launch
+      }
+
+      // the query is not empty, we are searching something
+      val results = listToSearch.filter {
+        it.pokemonName.contains(query.trim(), ignoreCase = true) || it.number.toString() == query.trim()
+      }
+
+      if (_isSearchStarting) {
+        // cache the unsearched list to retrieve back when the search ends
+        _cachedPokemonList = pokemonList.value
+        _isSearchStarting = false
+      }
+
+      // set the list to the filtered results
+      pokemonList.value = results
+      isSearching.value = true
+    }
   }
 
 
@@ -66,7 +115,7 @@ class PokemonListViewModel @Inject constructor(private val _repository: PokemonR
 
           loadError.value = ""
           isLoading.value = false
-          pokemonList.value = pokedexEntries
+          pokemonList.value += pokedexEntries
 
         }
 

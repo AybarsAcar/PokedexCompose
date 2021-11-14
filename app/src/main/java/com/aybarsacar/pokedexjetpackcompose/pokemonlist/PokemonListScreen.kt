@@ -38,6 +38,7 @@ import com.aybarsacar.pokedexjetpackcompose.ui.theme.RobotoCondensed
 @Composable
 fun PokemonListScreen(
   navController: NavController,
+  viewModel: PokemonListViewModel = hiltViewModel()
 ) {
 
   Surface(
@@ -62,7 +63,9 @@ fun PokemonListScreen(
           .fillMaxWidth()
           .padding(16.dp),
         hint = "Search",
-        onSearch = {}
+        onSearch = {
+          viewModel.searchPokemonList(it)
+        }
       )
 
       Spacer(modifier = Modifier.height(16.dp))
@@ -102,7 +105,7 @@ fun SearchBar(
         .background(Color.White, CircleShape)
         .padding(horizontal = 20.dp, vertical = 12.dp)
         .onFocusChanged {
-          isHintDisplayed = !it.isFocused
+          isHintDisplayed = !it.isFocused && text.isNotEmpty()
         }
     )
 
@@ -124,6 +127,7 @@ fun PokemonList(
   val endReached by remember { viewModel.endReached }
   val loadError by remember { viewModel.loadError }
   val isLoading by remember { viewModel.isLoading }
+  val isSearching by remember { viewModel.isSearching }
 
 
   LazyColumn(contentPadding = PaddingValues(16.dp)) {
@@ -133,7 +137,8 @@ fun PokemonList(
 
     items(itemCount) {
 
-      if (it >= itemCount - 1 && !endReached && !isLoading) {
+      // paginate conditions
+      if (it >= itemCount - 1 && !endReached && !isLoading && !isSearching) {
         // we scrolled to the bottom so paginate
         // which will add to the lazy column
         viewModel.loadPokemonPaginated()
